@@ -1,6 +1,6 @@
 # picoctf 2019
 # nasm 沒有 ptr
-
+https://hackmd.io/@BEDcPAXbTqKfNoHvW0ZnWw/S16ETnhbH#code22
 ---
 
 ## Glory of the Garden - Points: 50 - (Solves: 2463)Forensics
