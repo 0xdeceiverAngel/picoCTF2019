@@ -1,6 +1,13 @@
 # picoctf 2019
 # nasm 沒有 ptr
 https://hackmd.io/@BEDcPAXbTqKfNoHvW0ZnWw/S16ETnhbH#code22
+# total review
+最高衝到790幾名
+結束後大概在840多
+總分11900
+最後一天放棄 打不出來了
+
+
 ---
 
 ## Glory of the Garden - Points: 50 - (Solves: 2463)Forensics
