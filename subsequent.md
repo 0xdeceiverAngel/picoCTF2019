@@ -98,3 +98,40 @@ Else Whisper "That ain't it, Chief"
 Break it down
 ```
 picoCTF{BONJOVI}
+## shark on wire 1 - Points: 150 - (Solves: 3425)Forensics
+### review
+當初找的要死要活的 就是沒找到
+
+無法 ~~$strings pacp |grep pico~~
+
+要進去 找 udp or tcp stream 一個個看
+>udp.stream eq 6 六是編號 wireshark 給的
+
+>less than 小于 < lt
+小于等于 le
+其他：
+等于 eq
+大于 gt
+大于等于 ge
+
+然後follow stream 就可以了
+
+picoCTF{StaT31355_636f6e6e}
+## WhitePages - Points: 250 - (Solves: 1357)Forensics
+### review
+>hexdump -C file 替換成 xxd
+
+有點通靈
+話說 pwntools 函數真D好用
+```
+from pwn import *
+
+with open('./whitepages.txt', 'rb') as f:
+  data = f.read()
+
+data  = data.replace('e28083'.decode('hex'), '0')
+data  = data.replace(' ', '1')
+
+print unbits(data)
+```
+picoCTF{not_all_spaces_are_created_equal_dd5c2e2f77f89f3051c82bfee7d996ef}
