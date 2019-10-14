@@ -134,4 +134,4 @@ data  = data.replace(' ', '1')
 
 print unbits(data)
 ```
-picoCTF{not_all_spaces_are_created_equal_dd5c2e2f77f89f3051c82bfee7d996ef}
+picoCTF{not_all_spaces_are_created_equal_c167040c738e8bcae2109ef4be5960b1}
