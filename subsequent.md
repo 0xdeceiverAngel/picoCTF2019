@@ -1,6 +1,6 @@
 # picoCTF 2019 subsequent
-##mus1c - Points: 300 - (Solves: 1560)General Skills
-###review
+## mus1c - Points: 300 - (Solves: 1560)General Skills
+### review
 看了別人了writeup
 我服了 rockstar 這款語言的repo https://github.com/RockstarLang/rockstar
 https://codewithrockstar.com/online 用這個解
