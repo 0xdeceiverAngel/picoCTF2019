@@ -367,3 +367,74 @@ while 1:
 picoCTF{cAnAr135_mU5t_b3_r4nd0m!_bf34cd22}
 
 *他說flag不對*
+
+## asm4 - Points: 400 - (Solves: 432)Reverse Engineering
+
+看writeup 發現 日本跟我們的題目不一樣 且 flag 也不一樣
+
+一開始把 asm 改好 編起來 丟 ida
+
+---
+以下是心路歷程
+
+一開始 是改好 加上 _start  變數設好 call asm4
+
+但是出來的答案就是不對 我看了stack變化 也覺得怪 猜說應該是我的傳參數的問題
+
+那時候因為ubuntu 沒有 ida decompiler 所以沒看
+
+阿hopper翻出來 又怪怪的
+```
+signed int __cdecl asm4(int fun_in)
+{
+  signed int ret_val; // [esp+4h] [ebp-10h]
+  int loop_i; // [esp+8h] [ebp-Ch]
+  int loop_j; // [esp+Ch] [ebp-8h]
+
+  ret_val = 0x280;
+  for ( loop_i = 0; *(_BYTE *)(loop_i + fun_in); ++loop_i )
+    ;
+  for ( loop_j = 1; loop_j < loop_i - 1; ++loop_j )
+    ret_val += *(char *)(loop_j + fun_in)       // useless
+             - *(char *)(loop_j - 1 + fun_in)
+             + *(char *)(loop_j + 1 + fun_in)
+             - *(char *)(loop_j + fun_in);      // useless
+  return ret_val;
+}
+```
+```
+s="picoCTF_e341d"
+
+print(len(s))
+val=0x280
+
+for i in range(1,len(s)-1):
+    val += (ord(s[i+1]))
+    val -= (ord(s[i-1]))
+print(hex(val))
+
+```
+有位日本大大事這樣做的
+
+solve.c
+```
+#include <stdio.h>
+
+int main(void)
+{
+    printf("picoCTF{0x%x}\n", asm4("picoCTF_d899a"));
+    return 0;
+}
+```
+>$ gcc -m32 -c tset.S -o test.o
+
+>$ gcc -m32 -c solve.c -o solve.o -w
+
+>$ gcc -m32 solve.o test.o
+
+>$ ./a.out
+
+- -c 只生成obj檔
+- -w 不生成任何警告
+
+picoCTF{0x23c}
