@@ -250,9 +250,9 @@ r.sendline('\x01'*3)                  # get() input
 r.interactive()
 
 ```
-picoCTF{h0p_r0p_t0p_y0uR_w4y_t0_v1ct0rY_f60266f9}
+picoCTF{h0p_r0p_t0p_y0uR_w4y_t0_v1ct0rY_183d3d88}
 
-*阿送出去 他說flag不對？？？*
+~~*阿送出去 他說flag不對？？？*~~
 ## rop32 - Points: 400 - (Solves: 356)Binary Exploitation
 ### review
 看到writeup 我快被我自己氣死
@@ -351,7 +351,7 @@ for i in range(4):
 ```
 ```
 from pwn import *
-key = unhex('4c6a6748')
+key = unhex('3333784f')
 while 1:
         sh=process('./vuln')
         sh.sendlineafter('> ', str(32+4+12+6))
@@ -441,9 +441,10 @@ int main(int argc, char **argv){
   return 0;
 }
 ```
-picoCTF{cAnAr135_mU5t_b3_r4nd0m!_bf34cd22}
+picoCTF{cAnAr135_mU5t_b3_r4nd0m!_069c6f48}
 
-*他說flag不對*
+
+~~*他說flag不對*~~
 
 ## asm4 - Points: 400 - (Solves: 432)Reverse Engineering
 
