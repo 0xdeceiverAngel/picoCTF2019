@@ -665,3 +665,84 @@ r.recvall()
 不用p32 因為他是吃int
 
 picoCTF{A_s0ng_0f_1C3_and_f1r3_2a9d1eaf}
+## seed-sPRiNG - Points: 350 - (Solves: 420)Binary Exploitation
+### review
+搞了一個下午  pico 應該是有作弊之類的
+
+你看看 日本人寫的writeup port 是 4160
+
+奸詐的題目 local 測試時 seed 很老實的就是 time(0)
+
+```
+|           0x00000889      83c410         add esp, 0x10
+|           0x0000088c      83ec0c         sub esp, 0xc
+|           0x0000088f      6a00           push 0
+|           0x00000891      e89afcffff     call sym.imp.time           ; time_t time(time_t *timer)
+|           0x00000896      83c410         add esp, 0x10
+|           0x00000899      8945f0         mov dword [local_10h], eax
+|           0x0000089c      8b45f0         mov eax, dword [local_10h]
+|           0x0000089f      83ec0c         sub esp, 0xc
+|           0x000008a2      50             push eax
+|           0x000008a3      e8c8fcffff     call sym.imp.srand          ; void srand(int seed)
+
+```
+阿遠端時一直不過 我想說484我的recv那些寫錯了 看了超久 或是懷疑同步失敗
+
+害我還去同步時間
+
+後來看了別人的解法 MD 好像要爆破 = =
+
+### code
+rand.c
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+int main(int argc, char **argv)
+{
+    int delta = atoi(argv[1]);
+    //int delta=0;
+    // char c;
+    // printf("%d\n",delta );
+    srand(time(NULL)+delta);
+    for (int i=0; i<30; i++)
+{
+
+  // scanf("%cn",&c);
+  printf("%d\n", rand()&0xf);
+
+}
+
+}
+
+```
+```
+from pwn import *
+# context.log_level = 'DEBUG'
+for q in range(-100,100):
+    try:
+        # r=process('./seed_spring')
+
+        r=remote('2019shell1.picoctf.com',45107)
+        # r=remote('2019shell1.picoctf.com',4160)
+
+        # local=process(argv=['./rand','-29'])
+        local=process(argv=['./rand',str(q)])
+
+        for i in range(30):
+            rec=local.recvuntil('\n')
+            recv=r.sendafter(': ',rec)
+
+            # rec=r.recvuntil('\n')
+            # if 'WRONG' in rec:
+                # break
+
+        print(q)
+        r.interactive()
+    except:
+        print 'pass'
+
+```
+
+picoCTF{pseudo_random_number_generator_not_so_random_829c50d19ba2bdb441975c0dabfcc1c0}
