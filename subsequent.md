@@ -1133,3 +1133,35 @@ Input the name of a student
 
 ```
 picoCTF{g1v1ng_d1R3Ct10n5_409abf51}
+## Time's Up, Again! - Points: 450 - (Solves: 167)Reverse Engineering
+
+搞超久 一開始想說 跟上一題一樣 pwntools eval 就好 結果那個秒數 有夠少 python 不夠快
+
+網路上 有幾種解法
+- set sigset
+- c pipe 硬幹
+- 用 python subprocess 搞成 pyc 執行
+
+我試過 pipe 就是 算好的答案 導回去 就是沒反應
+
+不知道是pipe 不對 還 已經 timeout
+
+
+### code
+```
+#include <signal.h>
+#include <unistd.h>
+
+int main(){
+    sigset_t sigs;
+
+    sigemptyset(&sigs);
+    sigaddset(&sigs, SIGALRM);
+    sigprocmask(SIG_BLOCK, &sigs, 0);
+
+    execl("./times-up-again", "times-up-again", NULL);
+}
+
+
+```
+picoCTF{Hasten. Hurry. Ferrociously Speedy. #3230cac7}
