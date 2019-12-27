@@ -1165,3 +1165,12 @@ int main(){
 
 ```
 picoCTF{Hasten. Hurry. Ferrociously Speedy. #3230cac7}
+## B1ll_Gat35 - Points: 400 - (Solves: 137)Reverse Engineering
+### review
+心血來潮 突然逛逛 發現 有新的題目 是 win vc++ 8.0 寫的 console 沒殼
+
+x86dbg開 找 string 就找到了 超級87
+
+
+
+PICOCTF{These are the access codes to the vault: 1063340}
