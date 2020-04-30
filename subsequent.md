@@ -1175,3 +1175,32 @@ x86dbg開 找 string 就找到了 超級87
 
 
 PICOCTF{These are the access codes to the vault: 1063340}
+##  Mr-Worldwide - Points: 200 - (Solves: 7416)Cryptography
+### review
+給你經緯度 要你找flag
+
+直接貼別人的code 
+
+我覺得這題有點智障 因為它不是固定取城市名 或是 地區名
+
+https://github.com/Dvd848/CTFs/blob/master/2019_picoCTF/Mr-Worldwide.md
+
+picoCTF{KODIAK_ALANKA} 
+
+**flag錯誤 不知道why**
+
+## droids1 - Points: 350 - (Solves: 654)Reverse Engineering 
+### review
+當初在找password 一直找錯
+
+一直在com/hellocmu/picoctf 找
+
+結果東西在  resources/res/values/strings.xml  也不知道為啥東西會在那邊
+
+最後利用線上工具解壓 vscode直接搜
+
+![](https://github.com/0xdeciverAngel/picoCTF2019/blob/master/droids1.png?raw=true)
+
+找到password opossum 在app裡輸入 
+
+picoCTF{pining.for.the.fjords}
